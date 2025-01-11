@@ -28,9 +28,54 @@ int imageResolution = 0; //Used to pretty print output
 int imageWidth = 0; //Used to pretty print output
 
 // Assuming square array
-int map2d_to_1d_array(int r, int c, int width){
-  return r*width + c;
+int map2d_to_1d_array(int x, int y, int width){
+  return y*width + x;
 }
+
+void map8x8_to_3x4(int16_t* data, int16_t** grid){
+  const int imageWidth = 8;
+  for (int y = 0 ; y < imageWidth; y++)
+  {
+    for (int x = imageWidth - 1 ; x >= 0 ; x--)
+    {
+      // Serial.print("\t");
+      // Serial.print(measurementData.distance_mm[x + y]);
+      int dist = measurementData.distance_mm[map2d_to_1d_array(x, y, 8)];
+      int mappedX;
+      switch(x){
+        case 0:
+          mappedX = 2;
+          break;
+        case 1:
+          mappedX = 2;
+          break;
+        case 2:
+          mappedX = 2;
+          break;
+        case 3:
+          mappedX = 1;
+          break;
+        case 4:
+          mappedX = 1;
+          break;
+        case 5:
+          mappedX = 0;
+          break;
+        case 6:
+          mappedX = 0;
+          break;
+        case 7:
+          mappedX = 0;
+          break;        
+      }
+
+    }
+    // Serial.println();
+  }
+
+
+}
+
 
 void setup()
 {  
