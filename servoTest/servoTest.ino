@@ -18,6 +18,7 @@
 #include <SparkFun_VL53L5CX_Library.h> //http://librarymanager/All#SparkFun_VL53L5CX
 // servo
 #include <ESP32Servo.h>
+#include <limits.h> 
 
 Servo myServo;
 
@@ -27,12 +28,11 @@ VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes 
 int imageResolution = 0; //Used to pretty print output
 int imageWidth = 0; //Used to pretty print output
 
-// Assuming square array
 int map2d_to_1d_array(int x, int y, int width){
   return y*width + x;
 }
 
-void map8x8_to_3x4(int16_t* data, int16_t** grid){
+void map8x8_to_3x4(int16_t* data, int16_t grid[4][3]){
   const int imageWidth = 8;
   for (int y = 0 ; y < imageWidth; y++)
   {
@@ -40,8 +40,12 @@ void map8x8_to_3x4(int16_t* data, int16_t** grid){
     {
       // Serial.print("\t");
       // Serial.print(measurementData.distance_mm[x + y]);
-      int dist = measurementData.distance_mm[map2d_to_1d_array(x, y, 8)];
-      int mappedX;
+      int mappedX, mappedY;
+      grid[mappedY][mappedX] = INT16_MAX;;
+
+      int16_t dist = measurementData.distance_mm[map2d_to_1d_array(x, y, 8)];
+      mappedY = y/2;
+
       switch(x){
         case 0:
           mappedX = 2;
@@ -50,7 +54,7 @@ void map8x8_to_3x4(int16_t* data, int16_t** grid){
           mappedX = 2;
           break;
         case 2:
-          mappedX = 2;
+          mappedX = 1;
           break;
         case 3:
           mappedX = 1;
@@ -59,7 +63,7 @@ void map8x8_to_3x4(int16_t* data, int16_t** grid){
           mappedX = 1;
           break;
         case 5:
-          mappedX = 0;
+          mappedX = 1;
           break;
         case 6:
           mappedX = 0;
@@ -69,13 +73,63 @@ void map8x8_to_3x4(int16_t* data, int16_t** grid){
           break;        
       }
 
+      grid[mappedY][mappedX] = min(dist, grid[mappedY][mappedX]);
+
     }
     // Serial.println();
   }
-
-
 }
 
+void mapZoomedIn(int16_t* data, int16_t grid[4][3]){
+  const int imageWidth = 4;
+  for (int y = 0 ; y < imageWidth; y++)
+  {
+    for (int x = imageWidth - 1 ; x >= 0 ; x--)
+    {
+      // Serial.print("\t");
+      // Serial.print(measurementData.distance_mm[x + y]);
+      int mappedX, mappedY;
+      grid[mappedY][mappedX] = INT16_MAX;;
+
+      int16_t dist = measurementData.distance_mm[map2d_to_1d_array(x, y, 8)];
+      mappedY = y/2;
+
+      switch(x){
+        case 0:
+          mappedX = 2;
+          break;
+        case 1:
+          mappedX = 2;
+          break;
+        case 2:
+          mappedX = 1;
+          break;
+        case 3:
+          mappedX = 1;
+          break;
+        case 4:
+          mappedX = 1;
+          break;
+        case 5:
+          mappedX = 1;
+          break;
+        case 6:
+          mappedX = 0;
+          break;
+        case 7:
+          mappedX = 0;
+          break;        
+      }
+
+      grid[mappedY][mappedX] = min(dist, grid[mappedY][mappedX]);
+
+    }
+    // Serial.println();
+  }
+}
+
+int16_t grid[4][3];
+int16_t data[8][8];
 
 void setup()
 {  
