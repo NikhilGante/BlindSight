@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../../libraries/SparkFun_VL53L5CX_Arduino_Library/src"
+		},
+		{
+			"name": "Pico_Temp_Detect",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
