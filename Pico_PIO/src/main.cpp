@@ -24,13 +24,19 @@
 // #include <ESP32Servo.h>
 #include <limits.h> 
 
-Servo myServo;
 
 SparkFun_VL53L5CX myImager;
 VL53L5CX_ResultsData measurementData; // Result data class structure, 1356 byes of RAM
 
 int imageResolution = 0; //Used to pretty print output
 int imageWidth = 0; //Used to pretty print output
+
+#define NUM_SERVOS 12
+// Servo myServo;
+
+Servo servoArr[12];
+int servoPinArr[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+
 
 int map2d_to_1d_array(int x, int y, int width){
   return y*width + x;
@@ -44,7 +50,7 @@ void map8x8_to_3x4(const int16_t* data, int16_t grid[4][3]) {
   for (int y = 0; y < width; y++) {
     for (int x = width - 1; x >= 0; x--) {
       int mappedX = 0;  // Ensure initialization
-      int mappedY = y / 2;
+      int mappedY = 3- y/2;
 
       // Calculate the index and retrieve the value from the data array
 
@@ -52,7 +58,7 @@ void map8x8_to_3x4(const int16_t* data, int16_t grid[4][3]) {
       switch (x) {
         case 0:
         case 1:
-          mappedX = 2;
+          mappedX = 0;
           break;
         case 2:
         case 3:
@@ -62,7 +68,7 @@ void map8x8_to_3x4(const int16_t* data, int16_t grid[4][3]) {
           break;
         case 6:
         case 7:
-          mappedX = 0;
+          mappedX = 2;
           break;
         default:
           // Handle unexpected cases (e.g., if x is outside the range)
@@ -88,7 +94,10 @@ void setup()
 
   // pinMode(D25, OUTPUT);
   pinMode(LED_PIN, OUTPUT_2MA);
-  myServo.attach(D0);
+
+  for (int i = 0; i < NUM_SERVOS; i++)  servoArr[i].attach(servoPinArr[i]);
+  
+  // myServo.attach(D0);
   
   Serial.begin(115200);
   delay(1000);
@@ -148,6 +157,9 @@ void loop()
           Serial.print("\t");
           // Serial.print(measurementData.distance_mm[x + y]);
           Serial.print(grid[3-y][x]);
+          int ind = map2d_to_1d_array(x, y, 3);
+          int servoVal = constrain(map(grid[x][y],100, 1500, 180, 0), 0, 180);
+          servoArr[ind].write(servoVal);
         }
         Serial.println();
       }
@@ -155,19 +167,21 @@ void loop()
 
       // int index = map2d_to_1d_array(imageWidth/2, imageWidth/2, imageWidth);
       // int servoVal = constrain(map(measurementData.distance_mm[index],100, 1500, 0, 180), 0, 180);
-      int servoVal = constrain(map(grid[1][2],100, 1500, 180, 0), 0, 180);
+      // int servoVal = constrain(map(grid[1][2],100, 1500, 180, 0), 0, 180);
 
-      myServo.write(servoVal);
+
+
+      // myServo.write(servoVal);
       // Serial.print(measurementData.distance_mm[index]);
-      Serial.print(grid[1][2]);
-      Serial.print("\t Servo: ");
-      Serial.println(servoVal);
+      // Serial.print(grid[1][2]);
+      // Serial.print("\t Servo: ");
+      // Serial.println(servoVal);
 
 
     }
   }
   
-  if(millis() - lastSwitch > 1000){
+  if(millis() - lastSwitch > 5000){
     ledState = !ledState;
     digitalWrite(LED_PIN, ledState);
 
@@ -193,46 +207,3 @@ void loop()
   // myServo.write(servoPos);
 
 }
-
-
-
-// #include <Arduino.h>
-// #include "pico/stdlib.h"
-
-
-// #include <Servo.h>
-
-// /*
-//   Read an 8x8 array of distances from the VL53L5CX
-//   By: Nathan Seidle
-//   SparkFun Electronics
-//   Date: October 26, 2021
-//   License: MIT. See license file for more information but you can
-//   basically do whatever you want with this code.
-
-//   This example shows how to read all 64 distance readings at once.
-
-//   Feel like supporting our work? Buy a board from SparkFun!
-//   https://www.sparkfun.com/products/18642
-
-// */
-
-// #include <Wire.h>
-
-// #include <SparkFun_VL53L5CX_Library.h> //http://librarymanager/All#SparkFun_VL53L5CX
-// // servo
-// // #include <ESP32Servo.h>
-// #include <limits.h> 
-
-// void setup() {
-//     const uint LED_PIN = 25;
-//     gpio_init(LED_PIN);
-//     gpio_set_dir(LED_PIN, GPIO_OUT);
-//     while (true) {
-//         gpio_put(LED_PIN, 1);
-//         sleep_ms(250);
-//         gpio_put(LED_PIN, 0);
-//         sleep_ms(250);
-//     }
-// }
-// void loop() {}
