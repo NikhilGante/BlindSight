@@ -1,6 +1,7 @@
 #include <Arduino.h>
-
 #include <Servo.h>
+
+#include "hardware/pwm.h"
 
 /*
   Read an 8x8 array of distances from the VL53L5CX
@@ -83,6 +84,12 @@ void map8x8_to_3x4(const int16_t* data, int16_t grid[4][3]) {
   }
 }
 
+void _servoWrite(uint pin, uint8_t val) {
+  uint slice_num = pwm_gpio_to_slice_num(pin);
+  // pwm_set_wrap(slice_num, 24999); // 50 Hz frequency
+  pwm_set_chan_level(slice_num, pwm_gpio_to_channel(pin),
+                     map(val, 0, 180, 1000, 2000));  // 1.5 ms pulse
+}
 
 int16_t grid[4][3];
 
@@ -96,7 +103,20 @@ void setup()
   pinMode(LED_PIN, OUTPUT_2MA);
 
   for (int i = 0; i < NUM_SERVOS; i++)  servoArr[i].attach(servoPinArr[i]);
-  
+  // for (int i = 0; i < NUM_SERVOS; i++) pinMode(servoPinArr[i], OUTPUT);
+  // analogWriteFreq(100);
+  // analogWriteRange(180);
+  // servoPinArr
+
+  // for (int gpio = 0; gpio < 8; gpio++) {  // Start at GPIO 0
+  //   gpio_set_function(gpio, GPIO_FUNC_PWM);
+  //   uint slice_num = pwm_gpio_to_slice_num(gpio);
+  //   pwm_set_wrap(slice_num, 24999);  // 50 Hz frequency
+  //   pwm_set_chan_level(slice_num, pwm_gpio_to_channel(gpio),
+  //                      1500);  // 1.5 ms pulse
+  //   pwm_set_enabled(slice_num, true);
+  // }
+
   // myServo.attach(D0);
   
   Serial.begin(115200);
@@ -143,7 +163,12 @@ void loop()
         for (int x = imageWidth - 1 ; x >= 0 ; x--)
         {
           Serial.print("\t");
-          Serial.print(measurementData.distance_mm[x + y]);
+          if (measurementData.target_status[x + y] == 255) {
+            // Serial.print(" "); // Print a space for readability
+            Serial.print(measurementData.distance_mm[x + y]);
+          } else {
+            Serial.print("X   ");  // Indicate invalid data with 'X'
+          }
         }
         Serial.println();
       }
@@ -156,10 +181,15 @@ void loop()
         {
           Serial.print("\t");
           // Serial.print(measurementData.distance_mm[x + y]);
-          Serial.print(grid[3-y][x]);
           int ind = map2d_to_1d_array(x, y, 3);
-          int servoVal = constrain(map(grid[x][y],100, 1500, 180, 0), 0, 180);
+          Serial.print(ind);
+          Serial.print(": ");
+          Serial.print(grid[3 - y][x]);
+          int servoVal =
+              constrain(map(grid[y][x], 50, 400, 180, 0), 0, 180);  // 1500
           servoArr[ind].write(servoVal);
+          // analogWrite(servoPinArr[ind], servoVal);
+          // _servoWrite(servoPinArr[ind], servoVal);
         }
         Serial.println();
       }
